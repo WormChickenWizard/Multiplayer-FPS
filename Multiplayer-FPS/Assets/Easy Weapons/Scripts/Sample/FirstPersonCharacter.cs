@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.Networking;
 
 public class FirstPersonCharacter : MonoBehaviour
 {
@@ -24,9 +25,20 @@ public class FirstPersonCharacter : MonoBehaviour
 	public bool grounded { get; private set; }
 	private Vector2 input;
 	private IComparer rayHitComparer;
-	
-	void Awake ()
+    public Camera cam;
+
+    private void Start()
+    {
+        if (!GetComponent<NetworkIdentity>().isLocalPlayer)
+        {
+            cam.gameObject.GetComponent<AudioListener>().enabled = false;
+            cam.gameObject.SetActive(false);
+        }
+    }
+
+    void Awake ()
 	{
+
 		// Set up a reference to the capsule collider.
 		capsule = GetComponent<Collider>() as CapsuleCollider;
 		grounded = true;
@@ -67,6 +79,10 @@ public class FirstPersonCharacter : MonoBehaviour
 	
 	public void FixedUpdate ()
 	{
+
+        if (!GetComponent<NetworkIdentity>().isLocalPlayer) return;
+
+
 		float speed = runSpeed;
 		
 		float h = Input.GetAxis("Horizontal");

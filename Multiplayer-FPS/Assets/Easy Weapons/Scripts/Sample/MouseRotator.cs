@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 
 public class MouseRotator : MonoBehaviour {
 	
@@ -25,10 +26,12 @@ public class MouseRotator : MonoBehaviour {
 	Vector3 followAngles;
 	Vector3 followVelocity;
 	Quaternion originalRotation;
+    NetworkIdentity netid;
 
 	
 	// Use this for initialization
 	void Start () {
+        netid = GetComponent<NetworkIdentity>();
 		originalRotation = transform.localRotation;
 	}
 	
@@ -82,7 +85,8 @@ public class MouseRotator : MonoBehaviour {
 		followAngles = Vector3.SmoothDamp( followAngles, targetAngles, ref followVelocity, dampingTime );
 
 		// update the actual gameobject's rotation
-		transform.localRotation = originalRotation * Quaternion.Euler( -followAngles.x, followAngles.y, 0 );
+        if(netid.isLocalPlayer)
+		    transform.localRotation = originalRotation * Quaternion.Euler( -followAngles.x, followAngles.y, 0 );
 		
 	}
 
