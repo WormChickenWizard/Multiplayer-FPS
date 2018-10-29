@@ -11,7 +11,7 @@ public class IPGetter : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         Text t = GetComponent<Text>();
-        t.text = "Your Local IP is: " + GetLocalIPAddress() + "\nUse this for LAN play when you're hosting!";
+        t.text = GetLocalIPAddress();
 	}
 
     public static string GetLocalIPAddress()
