@@ -112,7 +112,7 @@ namespace Prototype.NetworkLobby
 
             ChangeReadyButtonColor(JoinColor);
 
-            readyButton.transform.GetChild(0).GetComponent<Text>().text = "JOIN";
+            readyButton.transform.GetChild(0).GetComponent<Text>().text = "READY UP";
             readyButton.interactable = true;
 
             //have to use child count of player prefab already setup as "this.slot" is not set yet

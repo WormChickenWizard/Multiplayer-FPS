@@ -26,29 +26,36 @@ public class MouseRotator : MonoBehaviour {
 	Vector3 followAngles;
 	Vector3 followVelocity;
 	Quaternion originalRotation;
-    NetworkIdentity netid;
+    bool paused = false;
 
 	
 	// Use this for initialization
 	void Start () {
-        netid = GetComponent<NetworkIdentity>();
 		originalRotation = transform.localRotation;
 	}
 	
 	// Update is called once per frame
 	void Update () {
+
+        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer) Destroy(this);
 		
 		// we make initial calculations from the original local rotation
 		transform.localRotation = originalRotation;
+
+        //toggles the paused function
+        if (Input.GetKeyDown(KeyCode.Escape)) paused = !paused;
 
 		// read input from mouse or mobile controls
 		float inputH = 0;
 		float inputV = 0;
 		if (relative)
 		{
-			
-			inputH = Input.GetAxis("Mouse X");
-			inputV = Input.GetAxis("Mouse Y");
+			if(!paused)
+            {
+			    inputH = Input.GetAxis("Mouse X");
+			    inputV = Input.GetAxis("Mouse Y");
+            }
+
 			
 			// wrap values to avoid springing quickly the wrong way from positive to negative
 			if (targetAngles.y > 180) { targetAngles.y -= 360; followAngles.y -= 360; }
@@ -66,8 +73,12 @@ public class MouseRotator : MonoBehaviour {
 
 		} else {
 
-			inputH = Input.mousePosition.x;
-			inputV = Input.mousePosition.y;
+            if(!paused)
+            {
+			    inputH = Input.mousePosition.x;
+			    inputV = Input.mousePosition.y;
+            }
+
 
 			// set values to allowed range
 			targetAngles.y = Mathf.Lerp ( -rotationRange.y * 0.5f, rotationRange.y * 0.5f, inputH/Screen.width );
@@ -84,9 +95,10 @@ public class MouseRotator : MonoBehaviour {
 		// smoothly interpolate current values to target angles
 		followAngles = Vector3.SmoothDamp( followAngles, targetAngles, ref followVelocity, dampingTime );
 
-		// update the actual gameobject's rotation
-        if(netid.isLocalPlayer)
-		    transform.localRotation = originalRotation * Quaternion.Euler( -followAngles.x, followAngles.y, 0 );
+        // update the actual gameobject's rotation
+        //Debug.Log(isLocalPlayer);
+
+		transform.localRotation = originalRotation * Quaternion.Euler( -followAngles.x, followAngles.y, 0 );
 		
 	}
 

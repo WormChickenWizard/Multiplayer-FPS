@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.Networking;
 
 public class FirstPersonHeadBob : MonoBehaviour {
 
@@ -52,6 +53,8 @@ public class FirstPersonHeadBob : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+
+        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer) Destroy(this);
 
 		originalLocalPos = head.localPosition;
 		character = GetComponent<FirstPersonCharacter>();

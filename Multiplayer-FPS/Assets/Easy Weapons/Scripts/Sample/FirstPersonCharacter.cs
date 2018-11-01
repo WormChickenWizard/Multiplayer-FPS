@@ -29,10 +29,14 @@ public class FirstPersonCharacter : MonoBehaviour
 
     private void Start()
     {
-        if (!GetComponent<NetworkIdentity>().isLocalPlayer)
+
+
+        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer)
         {
+            Destroy(GetComponent<Rigidbody>());
             cam.gameObject.GetComponent<AudioListener>().enabled = false;
             cam.gameObject.SetActive(false);
+            Destroy(this);
         }
     }
 
@@ -80,7 +84,7 @@ public class FirstPersonCharacter : MonoBehaviour
 	public void FixedUpdate ()
 	{
 
-        if (!GetComponent<NetworkIdentity>().isLocalPlayer) return;
+        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer) return;
 
 
 		float speed = runSpeed;

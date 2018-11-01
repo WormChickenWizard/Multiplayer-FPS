@@ -17,6 +17,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
 public enum WeaponType
 {
@@ -212,6 +213,9 @@ public class Weapon : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
+
+        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer)
+            showCrosshair = false;
 		// Calculate the actual ROF to be used in the weapon systems.  The rateOfFire variable is
 		// designed to make it easier on the user - it represents the number of rounds to be fired
 		// per second.  Here, an actual ROF decimal value is calculated that can be used with timers.
@@ -320,6 +324,8 @@ public class Weapon : MonoBehaviour
 	// Checks for user input to use the weapons - only if this weapon is player-controlled
 	void CheckForUserInput()
 	{
+
+        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer) return;
 
 		// Fire if this is a raycast type weapon and the user presses the fire button
 		if (type == WeaponType.Raycast)
@@ -627,7 +633,7 @@ public class Weapon : MonoBehaviour
 					//call the ApplyDamage() function on the enenmy CharacterSetup script
 					if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Limb"))
 					{
-						Vector3 directionShot = hit.collider.transform.position - transform.position;
+						//Vector3 directionShot = hit.collider.transform.position - transform.position;
 
 						//  Un-comment the following section for Bloody Mess compatibility
 						/*
@@ -898,7 +904,14 @@ public class Weapon : MonoBehaviour
 		LineRenderer beamLR = beamGO.GetComponent<LineRenderer>();
 		beamLR.material = beamMaterial;
 		beamLR.material.SetColor("_TintColor", beamColor);
-		beamLR.SetWidth(startBeamWidth, endBeamWidth);
+		
+        //obsolete method
+        //beamLR.SetWidth(startBeamWidth, endBeamWidth);
+
+
+        beamLR.startWidth = startBeamWidth;
+        beamLR.endWidth = endBeamWidth;
+
 
 		// The number of reflections
 		int reflections = 0;
@@ -967,7 +980,7 @@ public class Weapon : MonoBehaviour
 					//call the ApplyDamage() function on the enenmy CharacterSetup script
 					if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Limb"))
 					{
-						Vector3 directionShot = hit.collider.transform.position - transform.position;
+						//Vector3 directionShot = hit.collider.transform.position - transform.position;
 
 						//  Remove the comment marks from the following section of code for Bloody Mess support
 						/*
@@ -999,7 +1012,10 @@ public class Weapon : MonoBehaviour
 		} while (keepReflecting && reflections < maxReflections && reflect && (reflectionMaterial == null || (FindMeshRenderer(hit.collider.gameObject) != null && FindMeshRenderer(hit.collider.gameObject).sharedMaterial == reflectionMaterial)));
 
 		// Set the positions of the vertices of the line renderer beam
-		beamLR.SetVertexCount(reflectionPoints.Count);
+        //obsolete method, replaced with positionCount
+		//beamLR.SetVertexCount(reflectionPoints.Count);
+
+        beamLR.positionCount = reflectionPoints.Count;
 		for (int i = 0; i < reflectionPoints.Count; i++)
 		{
 			beamLR.SetPosition(i, reflectionPoints[i]);

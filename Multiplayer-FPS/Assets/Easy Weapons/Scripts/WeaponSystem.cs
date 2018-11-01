@@ -7,17 +7,40 @@
 
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Networking;
 
-public class WeaponSystem : MonoBehaviour
+public class WeaponSystem : NetworkBehaviour
 {
 	public GameObject[] weapons;				// The array that holds all the weapons that the player has
-	public int startingWeaponIndex = 0;			// The weapon index that the player will start with
-	private int weaponIndex;					// The current index of the active weapon
+	public int startingWeaponIndex = 0;         // The weapon index that the player will start with
+    [SyncVar]
+    public int weaponIndex;					    // The current index of the active weapon
 
 
-	// Use this for initialization
-	void Start()
+    [Command]
+    void CmdUpdateWeaponValueServer(int index)
+    {
+        weaponIndex = index;
+        CallRpc(index);
+    }
+
+    void CallRpc(int num)
+    {
+        RpcUpdateWeaponClients(num);
+    }
+
+    [ClientRpc]
+    void RpcUpdateWeaponClients(int index)
+    {
+        if (isLocalPlayer) return;
+        SetActiveWeapon(index, true);
+    }
+
+
+    // Use this for initialization
+    void Start()
 	{
+        if (!isLocalPlayer) return;
 		// Make sure the starting active weapon is the one selected by the user in startingWeaponIndex
 		weaponIndex = startingWeaponIndex;
 		SetActiveWeapon(weaponIndex);
@@ -26,6 +49,8 @@ public class WeaponSystem : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
+        if (!isLocalPlayer) return;
+
 		// Allow the user to instantly switch to any weapon
 		if (Input.GetButtonDown("Weapon 1"))
 			SetActiveWeapon(0);
@@ -47,19 +72,13 @@ public class WeaponSystem : MonoBehaviour
 			SetActiveWeapon(8);
 
 		// Allow the user to scroll through the weapons
-		if (Input.GetAxis("Mouse ScrollWheel") > 0)
-			NextWeapon();
 		if (Input.GetAxis("Mouse ScrollWheel") < 0)
+			NextWeapon();
+		if (Input.GetAxis("Mouse ScrollWheel") > 0)
 			PreviousWeapon();
 	}
 
-	void OnGUI()
-	{
-
-
-	}
-
-	public void SetActiveWeapon(int index)
+    public void SetActiveWeapon(int index, bool hasAlreadySet = false)
 	{
 		// Make sure this weapon exists before trying to switch to it
 		if (index >= weapons.Length || index < 0)
@@ -71,8 +90,15 @@ public class WeaponSystem : MonoBehaviour
 		// Send a messsage so that users can do other actions whenever this happens
 		SendMessageUpwards("OnEasyWeaponsSwitch", SendMessageOptions.DontRequireReceiver);
 
-		// Make sure the weaponIndex references the correct weapon
-		weaponIndex = index;
+        // Make sure the weaponIndex references the correct weapon
+        //weaponIndex = index;
+        if (!isServer)
+            CmdUpdateWeaponValueServer(index);
+        else if(!hasAlreadySet)
+        {
+            weaponIndex = index;
+            CallRpc(weaponIndex);
+        }
 
 		// Make sure beam game objects aren't left over after weapon switching
 		weapons[index].GetComponent<Weapon>().StopBeam();
@@ -86,6 +112,8 @@ public class WeaponSystem : MonoBehaviour
 		// Activate the one weapon that we want
 		weapons[index].SetActive(true);
 	}
+
+
 
 	public void NextWeapon()
 	{
