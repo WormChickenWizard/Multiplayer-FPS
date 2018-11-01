@@ -67,7 +67,7 @@ public class SmartBulletHoleGroup
 
 
 // The Weapon class itself handles the weapon mechanics
-public class Weapon : MonoBehaviour
+public class Weapon : NetworkBehaviour
 {
 	// Weapon Type
 	public WeaponType type = WeaponType.Projectile;		// Which weapon system should be used
@@ -213,9 +213,11 @@ public class Weapon : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
-
-        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer)
+        //disables the crosshairs for the weapons that don't belong to the local player
+        if (!isLocalPlayer)
             showCrosshair = false;
+
+
 		// Calculate the actual ROF to be used in the weapon systems.  The rateOfFire variable is
 		// designed to make it easier on the user - it represents the number of rounds to be fired
 		// per second.  Here, an actual ROF decimal value is calculated that can be used with timers.
@@ -325,7 +327,7 @@ public class Weapon : MonoBehaviour
 	void CheckForUserInput()
 	{
 
-        if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer) return;
+        if (!isLocalPlayer) return;
 
 		// Fire if this is a raycast type weapon and the user presses the fire button
 		if (type == WeaponType.Raycast)
@@ -627,28 +629,6 @@ public class Weapon : MonoBehaviour
 				{
 					hit.transform.SendMessageUpwards("Damage", damage / 100, SendMessageOptions.DontRequireReceiver);
 				}
-
-				if (bloodyMessEnabled)
-				{
-					//call the ApplyDamage() function on the enenmy CharacterSetup script
-					if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Limb"))
-					{
-						//Vector3 directionShot = hit.collider.transform.position - transform.position;
-
-						//  Un-comment the following section for Bloody Mess compatibility
-						/*
-						if (hit.collider.gameObject.GetComponent<Limb>())
-						{
-							GameObject parent = hit.collider.gameObject.GetComponent<Limb>().parent;
-							CharacterSetup character = parent.GetComponent<CharacterSetup>();
-							character.ApplyDamage(damage, hit.collider.gameObject, weaponType, directionShot, Camera.main.transform.position);
-						}
-						*/
-					}
-				}
-
-
-
 				// Bullet Holes
 
 				// Make sure the hit GameObject is not defined as an exception for bullet holes
