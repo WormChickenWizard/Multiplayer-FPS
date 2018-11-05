@@ -8,12 +8,13 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
+using Prototype.NetworkLobby;
 
 public class WeaponSystem : NetworkBehaviour
 {
 	public GameObject[] weapons;				// The array that holds all the weapons that the player has
 	public int startingWeaponIndex = 0;         // The weapon index that the player will start with
-    [SyncVar]
+    [SyncVar(hook = "SetActiveWeapon")]
     public int weaponIndex;					    // The current index of the active weapon
 
 
@@ -21,28 +22,25 @@ public class WeaponSystem : NetworkBehaviour
     void CmdUpdateWeaponValueServer(int index)
     {
         weaponIndex = index;
-        CallRpc(index);
     }
 
-    void CallRpc(int num)
+    [Command]
+    public void CmdChangeHealth(float amount, GameObject hitObject)
     {
-        RpcUpdateWeaponClients(num);
-    }
-
-    [ClientRpc]
-    void RpcUpdateWeaponClients(int index)
-    {
-        if (isLocalPlayer) return;
-        SetActiveWeapon(index, true);
+        //Debug.Log("Hit: " + hitObject);
+        Health health = hitObject.GetComponentInParent<Health>();
+        health.ChangeHealth(amount);
     }
 
 
     // Use this for initialization
     void Start()
 	{
-        if (!isLocalPlayer) return;
 		// Make sure the starting active weapon is the one selected by the user in startingWeaponIndex
-		weaponIndex = startingWeaponIndex;
+        if (isLocalPlayer)
+        {
+		    weaponIndex = startingWeaponIndex;
+        }
 		SetActiveWeapon(weaponIndex);
 	}
 	
@@ -78,12 +76,17 @@ public class WeaponSystem : NetworkBehaviour
 			PreviousWeapon();
 	}
 
-    public void SetActiveWeapon(int index, bool hasAlreadySet = false)
+    public void SetActiveWeapon(int index)
+    {
+        SetActiveWeapon(index, false);
+    }
+
+    public void SetActiveWeapon(int index, bool hasAlreadySet)
 	{
 		// Make sure this weapon exists before trying to switch to it
 		if (index >= weapons.Length || index < 0)
 		{
-			Debug.LogWarning("Tried to switch to a weapon that does not exist.  Make sure you have all the correct weapons in your weapons array.");
+			//Debug.LogWarning("Tried to switch to a weapon that does not exist.  Make sure you have all the correct weapons in your weapons array.");
 			return;
 		}
 
@@ -97,7 +100,7 @@ public class WeaponSystem : NetworkBehaviour
         else if(!hasAlreadySet)
         {
             weaponIndex = index;
-            CallRpc(weaponIndex);
+            //CallRpc(weaponIndex);
         }
 
 		// Make sure beam game objects aren't left over after weapon switching
@@ -118,7 +121,7 @@ public class WeaponSystem : NetworkBehaviour
 	public void NextWeapon()
 	{
 		weaponIndex++;
-		if (weaponIndex > weapons.Length - 1)
+		if (weaponIndex >= weapons.Length)
 			weaponIndex = 0;
 		SetActiveWeapon(weaponIndex);
 	}
