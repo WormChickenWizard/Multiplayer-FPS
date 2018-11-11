@@ -34,6 +34,10 @@ public class Health : NetworkBehaviour
     public GameObject pivot;
     NetworkStartPosition[] spawnPoints;
     GameObject tempDeadReplacement = null;
+    FirstPersonCharacter fpc;
+    CapsuleCollider charCollider;
+    public MouseRotator mainRotator;
+    public MouseRotator pivotRotator;
 
 	// Use this for initialization
 	void Start()
@@ -41,6 +45,12 @@ public class Health : NetworkBehaviour
 		// Initialize the currentHealth variable to the value specified by the user in startingHealth
 		currentHealth = startingHealth;
 	}
+
+    private void Awake()
+    {
+        fpc = GetComponent<FirstPersonCharacter>();
+        charCollider = GetComponent<CapsuleCollider>();
+    }
 
     private void Update()
     {
@@ -67,10 +77,12 @@ public class Health : NetworkBehaviour
 
 	public void Die()
 	{
+        mainRotator.enabled = false;
+        pivotRotator.enabled = false;
         if (dead) return;
         //"kills" the player globally
         CmdDie();
-        if (isPlayer && deadReplacement != null)
+        if (isPlayer && deadReplacement != null && tempDeadReplacement == null)
         {
             tempDeadReplacement = Instantiate(deadReplacement,regularPlayer.transform);
             tempDeadReplacement.transform.parent = null;
@@ -83,8 +95,7 @@ public class Health : NetworkBehaviour
         if (dead) return;
 		dead = true;
         Debug.Log("Disabling killed reg_player");
-        regularPlayer.SetActive(false);
-        RpcActivePlayer(false);
+        ActivePlayer(false);
     }
 
     [Command]
@@ -94,8 +105,9 @@ public class Health : NetworkBehaviour
         spawnPoints = FindObjectsOfType<NetworkStartPosition>();
         System.Random rand = new System.Random();
         int i = rand.Next(spawnPoints.Length);
-        regularPlayer.SetActive(true);
-        RpcActivePlayer(true);
+
+        ActivePlayer(true);
+
         dead = false;
         currentHealth = startingHealth;
 
@@ -105,14 +117,28 @@ public class Health : NetworkBehaviour
         }
         RpcVelocity();
 
-        regularPlayer.transform.localPosition = spawnPoints[i].transform.localPosition;
-        RpcMoveNetworkPlayer(regularPlayer.transform.localPosition);
+        Debug.Log(spawnPoints[i].transform.rotation.eulerAngles);
+
+
+        RpcMoveNetworkPlayer(spawnPoints[i].transform.position, spawnPoints[i].transform.rotation.eulerAngles.y);
+    }
+
+    public void ActivePlayer(bool isActive)
+    {
+        if(isLocalPlayer)
+            fpc.enabled = isActive;
+        charCollider.enabled = isActive;
+        pivot.transform.parent.gameObject.SetActive(isActive);
+        RpcActivePlayer(isActive);
     }
 
     [ClientRpc]
     public void RpcActivePlayer(bool isActive)
     {
-        regularPlayer.SetActive(isActive);
+        if(isLocalPlayer)
+            fpc.enabled = isActive;
+        charCollider.enabled = isActive;
+        pivot.transform.parent.gameObject.SetActive(isActive);
     }
 
     [ClientRpc]
@@ -123,8 +149,16 @@ public class Health : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void RpcMoveNetworkPlayer(Vector3 v3)
+    public void RpcMoveNetworkPlayer(Vector3 v3, float rotation)
     {
-        regularPlayer.transform.localPosition = v3;
+        if(isLocalPlayer)
+        {
+            regularPlayer.transform.position = v3;
+            regularPlayer.transform.eulerAngles = new Vector3(0,rotation,0);
+            pivot.transform.eulerAngles = Vector3.zero;
+            pivotRotator.enabled = true;
+            mainRotator.enabled = true;
+        }
+
     }
 }

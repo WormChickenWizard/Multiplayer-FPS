@@ -28,8 +28,15 @@ public class WeaponSystem : NetworkBehaviour
     public void CmdChangeHealth(float amount, GameObject hitObject)
     {
         //Debug.Log("Hit: " + hitObject);
-        Health health = hitObject.GetComponentInParent<Health>();
-        health.ChangeHealth(amount);
+        try
+        {
+            Health health = hitObject.GetComponentInParent<Health>();
+            health.ChangeHealth(amount);
+        } finally
+        {
+
+        }
+
     }
 
 
@@ -95,7 +102,7 @@ public class WeaponSystem : NetworkBehaviour
 
         // Make sure the weaponIndex references the correct weapon
         //weaponIndex = index;
-        if (!isServer)
+        if (isLocalPlayer)
             CmdUpdateWeaponValueServer(index);
         else if(!hasAlreadySet)
         {

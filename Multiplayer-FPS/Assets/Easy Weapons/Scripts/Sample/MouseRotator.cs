@@ -32,6 +32,7 @@ public class MouseRotator : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		originalRotation = transform.localRotation;
+        Debug.Log("Mouse Rotator On!");
 	}
 	
 	// Update is called once per frame

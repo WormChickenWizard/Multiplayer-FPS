@@ -10,10 +10,13 @@ public class IPGetter : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+#if !UNITY_WEBGL
         Text t = GetComponent<Text>();
         t.text = GetLocalIPAddress();
-	}
+#endif
+    }
 
+#if !UNITY_WEBGL
     public static string GetLocalIPAddress()
     {
         var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -26,4 +29,5 @@ public class IPGetter : MonoBehaviour {
         }
         throw new Exception("No network adapters with an IPv4 address in the system!");
     }
+#endif
 }
