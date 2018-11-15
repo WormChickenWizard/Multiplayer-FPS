@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.Networking;
 
 public class MouseRotator : MonoBehaviour {
@@ -26,36 +27,51 @@ public class MouseRotator : MonoBehaviour {
 	Vector3 followAngles;
 	Vector3 followVelocity;
 	Quaternion originalRotation;
-    bool paused = false;
+    public bool paused = false;
+    bool isDoneCalculating = false;
+    public bool settingPosition = false;
 
 	
 	// Use this for initialization
 	void Start () {
 		originalRotation = transform.localRotation;
-        Debug.Log("Mouse Rotator On!");
 	}
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update () {
+
+        if (paused)
+        {
+            try
+            {
+                GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+#pragma warning disable 0168
+            } catch(System.NullReferenceException e)
+
+            {
+
+            } catch(UnityEngine.MissingComponentException e)
+            {
+#pragma warning restore 0168
+            }
+            return;
+        }
+        isDoneCalculating = false;
 
         if (!GetComponentInParent<NetworkIdentity>().isLocalPlayer) Destroy(this);
 		
 		// we make initial calculations from the original local rotation
 		transform.localRotation = originalRotation;
 
-        //toggles the paused function
-        if (Input.GetKeyDown(KeyCode.Escape)) paused = !paused;
-
 		// read input from mouse or mobile controls
 		float inputH = 0;
 		float inputV = 0;
 		if (relative)
 		{
-			if(!paused)
-            {
-			    inputH = Input.GetAxis("Mouse X");
-			    inputV = Input.GetAxis("Mouse Y");
-            }
+
+			inputH = Input.GetAxis("Mouse X");
+			inputV = Input.GetAxis("Mouse Y");
+
 
 			
 			// wrap values to avoid springing quickly the wrong way from positive to negative
@@ -74,11 +90,10 @@ public class MouseRotator : MonoBehaviour {
 
 		} else {
 
-            if(!paused)
-            {
-			    inputH = Input.mousePosition.x;
-			    inputV = Input.mousePosition.y;
-            }
+
+			inputH = Input.mousePosition.x;
+			inputV = Input.mousePosition.y;
+
 
 
 			// set values to allowed range
@@ -96,12 +111,29 @@ public class MouseRotator : MonoBehaviour {
 		// smoothly interpolate current values to target angles
 		followAngles = Vector3.SmoothDamp( followAngles, targetAngles, ref followVelocity, dampingTime );
 
-        // update the actual gameobject's rotation
-        //Debug.Log(isLocalPlayer);
-
 		transform.localRotation = originalRotation * Quaternion.Euler( -followAngles.x, followAngles.y, 0 );
+        isDoneCalculating = true;
+
 		
 	}
+
+    public IEnumerator SetPosition(Quaternion rotation)
+    {
+        bool alreadyPaused = false;
+        if (paused)
+            alreadyPaused = true;
+
+        paused = true;
+        settingPosition = true;
+        while(!isDoneCalculating) {}
+        transform.localRotation = rotation;
+        originalRotation = rotation;
+        targetAngles = Vector3.zero;
+        if(!alreadyPaused)
+            paused = false;
+        settingPosition = false;
+        yield return null;
+    }
 
 
 }

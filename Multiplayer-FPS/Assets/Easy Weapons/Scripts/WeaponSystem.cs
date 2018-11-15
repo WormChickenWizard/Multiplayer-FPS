@@ -56,6 +56,8 @@ public class WeaponSystem : NetworkBehaviour
 	{
         if (!isLocalPlayer) return;
 
+        if (GetComponent<Health>().dead) return;
+
 		// Allow the user to instantly switch to any weapon
 		if (Input.GetButtonDown("Weapon 1"))
 			SetActiveWeapon(0);
@@ -82,6 +84,11 @@ public class WeaponSystem : NetworkBehaviour
 		if (Input.GetAxis("Mouse ScrollWheel") > 0)
 			PreviousWeapon();
 	}
+
+    public void ShowCurrentWeapon(bool show)
+    {
+        weapons[weaponIndex].SetActive(show);
+    }
 
     public void SetActiveWeapon(int index)
     {

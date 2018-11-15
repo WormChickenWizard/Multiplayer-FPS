@@ -26,6 +26,7 @@ public class FirstPersonCharacter : MonoBehaviour
 	private Vector2 input;
 	private IComparer rayHitComparer;
     public Camera cam;
+    public GameObject visor;
 
     private void Start()
     {
@@ -37,6 +38,10 @@ public class FirstPersonCharacter : MonoBehaviour
             cam.gameObject.GetComponent<AudioListener>().enabled = false;
             cam.gameObject.SetActive(false);
             Destroy(this);
+        } else
+        {
+            visor.SetActive(false);
+            GetComponent<MeshRenderer>().enabled = false;
         }
     }
 

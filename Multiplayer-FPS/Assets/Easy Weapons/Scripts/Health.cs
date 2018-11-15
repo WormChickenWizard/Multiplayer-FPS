@@ -31,11 +31,12 @@ public class Health : NetworkBehaviour
     [SyncVar]
 	public bool dead = false;					// Used to make sure the Die() function isn't called twice
     public GameObject regularPlayer;
-    public GameObject pivot;
     NetworkStartPosition[] spawnPoints;
     GameObject tempDeadReplacement = null;
     FirstPersonCharacter fpc;
     CapsuleCollider charCollider;
+    MeshRenderer charRenderer;
+    public GameObject visor;
     public MouseRotator mainRotator;
     public MouseRotator pivotRotator;
 
@@ -50,6 +51,7 @@ public class Health : NetworkBehaviour
     {
         fpc = GetComponent<FirstPersonCharacter>();
         charCollider = GetComponent<CapsuleCollider>();
+        charRenderer = GetComponent<MeshRenderer>();
     }
 
     private void Update()
@@ -77,8 +79,6 @@ public class Health : NetworkBehaviour
 
 	public void Die()
 	{
-        mainRotator.enabled = false;
-        pivotRotator.enabled = false;
         if (dead) return;
         //"kills" the player globally
         CmdDie();
@@ -120,15 +120,21 @@ public class Health : NetworkBehaviour
         Debug.Log(spawnPoints[i].transform.rotation.eulerAngles);
 
 
-        RpcMoveNetworkPlayer(spawnPoints[i].transform.position, spawnPoints[i].transform.rotation.eulerAngles.y);
+        RpcMoveNetworkPlayer(spawnPoints[i].transform.position, spawnPoints[i].transform.localRotation.eulerAngles.y);
     }
 
     public void ActivePlayer(bool isActive)
     {
         if(isLocalPlayer)
             fpc.enabled = isActive;
-        charCollider.enabled = isActive;
-        pivot.transform.parent.gameObject.SetActive(isActive);
+        charCollider.enabled = isActive; // character collision
+        //character visability
+        if(!isLocalPlayer)
+        {
+            charRenderer.enabled = isActive;
+            visor.SetActive(isActive);
+        }
+        GetComponent<WeaponSystem>().ShowCurrentWeapon(isActive);
         RpcActivePlayer(isActive);
     }
 
@@ -137,8 +143,14 @@ public class Health : NetworkBehaviour
     {
         if(isLocalPlayer)
             fpc.enabled = isActive;
-        charCollider.enabled = isActive;
-        pivot.transform.parent.gameObject.SetActive(isActive);
+        charCollider.enabled = isActive; // character collision
+        //character visability
+        if (!isLocalPlayer)
+        {
+            charRenderer.enabled = isActive;
+            visor.SetActive(isActive);
+        }
+        GetComponent<WeaponSystem>().ShowCurrentWeapon(isActive);
     }
 
     [ClientRpc]
@@ -154,10 +166,8 @@ public class Health : NetworkBehaviour
         if(isLocalPlayer)
         {
             regularPlayer.transform.position = v3;
-            regularPlayer.transform.eulerAngles = new Vector3(0,rotation,0);
-            pivot.transform.eulerAngles = Vector3.zero;
-            pivotRotator.enabled = true;
-            mainRotator.enabled = true;
+            StartCoroutine(mainRotator.SetPosition(Quaternion.Euler(0, rotation, 0)));
+            StartCoroutine(pivotRotator.SetPosition(Quaternion.identity));
         }
 
     }

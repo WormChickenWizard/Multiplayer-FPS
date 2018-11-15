@@ -39,6 +39,21 @@ public class BulletHole : MonoBehaviour
 	{
 		if (!usePooling)
 			FadeAndDieOverTime();
+
+        try
+        {
+            Health h = GetComponentInParent<Health>();
+            if (h.dead)
+                Destroy(gameObject);
+
+#pragma warning disable 0168
+        } catch (System.NullReferenceException e)
+        {
+
+        } catch (MissingComponentException e)
+        {
+#pragma warning restore 0168
+        }
 		
 	}
 

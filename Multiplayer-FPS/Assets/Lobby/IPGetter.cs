@@ -14,6 +14,11 @@ public class IPGetter : MonoBehaviour {
         Text t = GetComponent<Text>();
         t.text = GetLocalIPAddress();
 #endif
+
+#if UNITY_WEBGL
+        Text t = GetComponent<Text>();
+        t.text = "";
+#endif
     }
 
 #if !UNITY_WEBGL
